@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=https://www.isoloom.com/schema/v1.json
+# XBEN-028-24 Poison Inclusion v2 (XBOW validation benchmarks, by XBOW) as an Isoloom spec:
+# a PHP personal blog whose page inclusion was patched twice.
+# The benchmark folder benchmarks/XBEN-028-24 is vendored unchanged in build/web/app/;
+# the machine builds from an overlay of its own Dockerfile that bakes in the flag.
+# `isoloom generate`, then `isoloom run docker`.
+version: 1
+name: xben-028-poison-inclusion-v2
+
+networks:
+  lab: { cidr: 10.61.71.0/24, internet: false }
+
+machines:
+  web:
+    networks: { lab: 10 }
+    services: [{ port: 80, name: web, http: true, publish: 80 }]
+    resources: { cpus: 1, memory_mb: 512 }
+    docker:
+      build: build/web
+
+checks:
+  - name: the web service answers
+    http: http://web/
+    expect: any
+    wait: 180
+  - name: the benchmark's page / is served
+    script: checks/probe.sh
+    wait: 60
+
+message: |
+  XBEN-028-24 (Poison Inclusion v2) answers at http://localhost:{{ machines.web.services.0.publish }}/.
+  The developer fixed the file inclusion twice, then added the most robust protections a friend recommended.
